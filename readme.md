@@ -46,7 +46,7 @@ rules:
 
 - collection of spaces, newlines, and tabs
 
-> it uses rules specified in rust's `core::num::is_ascii_whitespace`
+> it uses rules specified in rust's `u8::is_ascii_whitespace`
 
 ## `Span`
 
