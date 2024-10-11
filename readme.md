@@ -6,11 +6,14 @@ inspired by rust `syn` and `proc_macro`
 
 tokenize a stream of bytes, into collection of token trees
 
-this is not a general tokenizer, because other kind of tokens can have other rules that cannot overlap each other,
-and its not worth to creating another abstraction layer. Other kinds of tokenizer mentioned in [extra](#Extra)
+every tokens does not contain the actual value, but instead it holds a [`Span`](##Span).
+Span contains 'pointer' to the actual value in source code.
 
-every tokens does not contain the actual value, but instead a [`Span`](##Span). Span contains information of the
-actual value in source.
+this is not a general tokenizer, because other kind of tokens can have other rules that cannot overlap,
+and its not worth to creating another abstraction layer. Instead, specialized tokenizer usually specified
+on its own, and can also derived from this tokenizer. That also make this tokenizer infallible.
+
+Other kinds of tokenizer mentioned in [extra](#Extra)
 
 ## `TokenTree`
 
@@ -33,9 +36,5 @@ cargo doc --open
 
 # Extra
 
-## HTML Tokenizer
-
-an identifier can contains `-`
-
-literal is only string
+- HTML Tokenizer
 
