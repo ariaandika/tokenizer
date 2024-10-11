@@ -103,9 +103,11 @@ impl Whitespace {
 
 pub mod tokenizer {
     //! the actual tokenizer
-    use std::{iter::Peekable, slice::Iter};
+    use std::{iter, slice};
     use super::{TokenTree, Ident, Punct, Whitespace};
     use super::span::Span;
+
+    type SlicePeek<'r> = iter::Peekable<slice::Iter<'r,u8>>;
 
     /// iterator that yield [`TokenTree`]
     #[derive(Debug)]
@@ -117,6 +119,10 @@ pub mod tokenizer {
         /// create new tokenizer from a source
         pub fn new(buf: &'r [u8]) -> Self {
             Self { iter: BufIter::new(buf) }
+        }
+
+        pub fn peekable_tokens(self) -> Peekable<'r> {
+            Peekable::new(self)
         }
     }
 
@@ -139,7 +145,7 @@ pub mod tokenizer {
     /// iterator that track [`Span`] and yield a byte from source buffer
     #[derive(Debug)]
     pub struct BufIter<'b> {
-        iter: Peekable<Iter<'b, u8>>,
+        iter: SlicePeek<'b>,
         offset: usize,
         line: usize,
         col: usize,
@@ -174,6 +180,63 @@ pub mod tokenizer {
             }
 
             Some((span, byte))
+        }
+    }
+
+    const PEEK_N: usize = 3;
+
+    #[derive(Debug)]
+    pub struct Peekable<'r> {
+        iter: Tokenizer<'r>,
+        peeked: [Option<TokenTree>;PEEK_N],
+    }
+
+    impl<'r> Peekable<'r> {
+        fn new(iter: Tokenizer<'r>) -> Self {
+            Self { iter, peeked: Default::default() }
+        }
+
+        fn peek_n(&mut self, n: usize) -> Option<&TokenTree> {
+            let some = &mut self.peeked[n];
+            if let None = some {
+                some.replace(self.iter.next()?);
+            }
+            self.peeked[n].as_ref()
+        }
+
+        pub fn peek(&mut self) -> Option<&TokenTree> {
+            self.peek_n(0)
+        }
+
+        pub fn peek2(&mut self) -> Option<&TokenTree> {
+            self.peek_n(0);
+            self.peek_n(1)
+        }
+
+        pub fn peek3(&mut self) -> Option<&TokenTree> {
+            self.peek_n(0);
+            self.peek_n(1);
+            self.peek_n(2)
+        }
+    }
+
+    impl<'r> Iterator for Peekable<'r> {
+        type Item = TokenTree;
+
+        fn next(&mut self) -> Option<Self::Item> {
+            let one = self.peeked[0].take();
+
+            for offset in 0..PEEK_N-1 {
+                let [one,two] = &mut self.peeked[offset..offset + 2] else {
+                    unreachable!("{PEEK_N} len array")
+                };
+                std::mem::swap(one, two);
+            }
+
+            match one {
+                Some(some) => Some(some),
+                None => self.iter.next(),
+            }
         }
     }
 
