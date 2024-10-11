@@ -20,44 +20,11 @@ possible types of token:
 - `Punct`
 - `Whitespace`
 
-### `Ident`
+for more detail, see the generated documentation
 
-a single word
-
-rules:
-
-- a collection of alphabetic, numeric, and underscore
-- cannot starts with numeric
-
-### `Punct`
-
-a single punctuation
-
-rules:
-
-- anything other than specified in identifiers
-- anything other than whitespace
-
-### `Whitespace`
-
-a whitespaces
-
-rules:
-
-- collection of spaces, newlines, and tabs
-
-> it uses rules specified in rust's `u8::is_ascii_whitespace`
-
-## `Span`
-
-a token map of the actual source
-
-a single span contains:
-
-- `offset`, 0 indexed position
-- `len`, length
-- `line`, 1 indexed line
-- `col`, 1 indexed column
+```bash
+cargo doc --open
+```
 
 # TODO
 
