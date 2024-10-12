@@ -263,7 +263,7 @@ pub mod tokenizer {
         }
     }
 
-    impl Spanned for Peekable<'_> {
+    impl<const N: usize> Spanned for Peekable<'_,N> {
         fn span(&self) -> Span {
             self.iter.span()
         }
