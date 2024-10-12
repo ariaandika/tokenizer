@@ -5,7 +5,7 @@ use tokenizer::span::Spanned;
 fn main() {
     let html = format!("{}/examples/index.html",env!("CARGO_MANIFEST_DIR"));
     let src = fs::read(html).unwrap();
-    let result = html_lexer::tokenizer::Tokenizer::new(&src).collect::<Result<Vec<_>, _>>();
+    let result = html_parser::tokenizer::Tokenizer::new(&src).collect::<Result<Vec<_>, _>>();
 
     match result {
         Ok(tokens) => {

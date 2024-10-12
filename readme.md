@@ -1,4 +1,4 @@
-# Basic Tokenizer, Lexer, or whatever
+# Basic Tokenizer, Lexer, Parser, or whatever
 
 inspired by rust `syn` and `proc_macro`
 
@@ -32,9 +32,9 @@ cargo doc --open
 
 ## Extra
 
-### HTML Lexer
+### HTML Parser
 
-Derived from `tokenizer`, we can create a html lexer.
+Derived from `tokenizer`, we can create a html parser.
 
 Here, we parse open or close element, not the whole element with its children. This is to avoid allocating
 new vector when iterating. So the result is a one dimensional tokens. Attributes also not parsed, only validated,
