@@ -58,7 +58,6 @@ impl Comment {
     }
 
     fn parse(iter: &mut Peekable1<4>, buf: &[u8]) -> Result<Self> {
-        eprintln!("parsing Comment");
         let tree = iter.next().expect(peeked!());
         let _ = iter.next().expect(peeked!());
         let _ = iter.next().expect(peeked!());
@@ -112,7 +111,6 @@ impl DOCTYPE {
     }
 
     fn parse(iter: &mut Peekable1<4>, buf: &[u8]) -> Result<Self> {
-        eprintln!("parsind DOCTYPE");
         let tree = iter.next().expect(peeked!());
         let _ = iter.next().expect(peeked!());
 
@@ -161,7 +159,6 @@ impl Element {
     }
 
     fn parse(iter: &mut Peekable1<4>, buf: &[u8]) -> Result<Self> {
-        eprintln!("parsing Element");
         let lt = iter.next().expect(peeked!());
         let (tag,kind) = 'out: {
             match next!(iter) {
@@ -275,7 +272,6 @@ pub struct Text {
 
 impl Text {
     fn parse(iter: &mut Peekable1<4>, buf: &[u8]) -> Result<Self> {
-        eprintln!("parsing Text");
         let tree = iter.next().expect(peeked!());
         let mut span = tree.span();
 
