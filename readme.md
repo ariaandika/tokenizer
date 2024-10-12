@@ -2,20 +2,21 @@
 
 inspired by rust `syn` and `proc_macro`
 
-# Tokenizer
+## Tokenizer
 
-tokenize a stream of bytes, into collection of token trees
+Tokenize a stream of bytes, into collection of token trees
 
-every tokens does not contain the actual value, but instead it holds a [`Span`](##Span).
-Span contains 'pointer' to the actual value in source code.
+Every tokens does not contain the actual value, but instead it holds a `Span`. Span contains 'pointer' to
+the actual value in source code. To get the actual value, we can `evaluate` based on source code. This required
+the caller to hold the source reference themself. In exchange, we only allocate numbers when tokenizing.
 
-this is not a general tokenizer, because other kind of tokens can have other rules that cannot overlap,
-and its not worth to creating another abstraction layer. Instead, specialized tokenizer usually specified
-on its own, and can also derived from this tokenizer. That also make this tokenizer infallible.
+This is not a general tokenizer, because other kind of tokens can have other rules that cannot overlap,
+and its not worth to creating another abstraction layer. Instead, specialized tokenizer usually created
+on its own, which also can derived from this tokenizer. That also make this tokenizer infallible.
 
-Other kinds of tokenizer mentioned in [extra](#Extra)
+Other kinds of tokenizer mentioned in [extra](##Extra)
 
-## `TokenTree`
+### `TokenTree`
 
 possible types of token:
 
@@ -29,12 +30,20 @@ for more detail, see the generated documentation
 cargo doc --open
 ```
 
-# TODO
+## Extra
 
-- lexer
-- parser
+### HTML Lexer
 
-# Extra
+Derived from `tokenizer`, we can create a html lexer.
 
-- HTML Tokenizer
+Here, we evaluate open or closed node, not the whole element with its children. This is to avoid allocating
+new vector when iterating. So the result is a one dimensional tokens. Attributes also not parsed, only validated,
+with same the reason above, to avoid allocating new vector. We can iterate attribute on its own if needed.
+
+We can detect:
+
+- `DOCTYPE`, html doctype `<!DOCTYPE html>`
+- `Comment`, html comment, `<!-- any value -->`
+- `Element`, open or close html element, attributes are only validated
+- `Text`, others
 
