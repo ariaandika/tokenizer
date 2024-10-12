@@ -1,0 +1,7 @@
+[package]
+name = "html-lexer"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokenizer = { version = "0.1.0", path = "../tokenizer" }
