@@ -198,7 +198,7 @@ pub mod tokenizer {
 
         fn peek_n(&mut self, n: usize) -> Option<&TokenTree> {
             let some = &mut self.peeked[n];
-            if let None = some {
+            if some.is_none() {
                 some.replace(self.iter.next()?);
             }
             self.peeked[n].as_ref()
