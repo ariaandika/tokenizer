@@ -265,7 +265,7 @@ pub mod tokenizer {
 
     impl<const N: usize> Spanned for Peekable<'_,N> {
         fn span(&self) -> Span {
-            match self.peeked.get(0) {
+            match self.peeked.first() {
                 Some(Some(tree)) => tree.span(),
                 _ => self.iter.span(),
             }
@@ -307,7 +307,7 @@ pub mod span {
         ///
         /// its check is all value set to 0, which should not be possible normally
         pub fn is_unknown(&self) -> bool {
-            self.offset == 0 && self.line == 0 &&
+            self.offset == 0 && self.len == 0 &&
             self.line == 0 && self.col == 0
         }
 
