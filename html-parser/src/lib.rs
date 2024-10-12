@@ -133,9 +133,20 @@ impl DOCTYPE {
 
 #[derive(Debug)]
 pub struct Element {
-    kind: ElementKind,
+    pub tag: Ident,
+    pub kind: ElementKind,
     span: Span,
-    tag_span: Span,
+}
+
+#[derive(Debug)]
+pub struct Ident {
+    span: Span
+}
+
+impl From<::tokenizer::Ident> for Ident {
+    fn from(value: ::tokenizer::Ident) -> Self {
+        Self { span: value.span() }
+    }
 }
 
 #[derive(Debug)]
@@ -175,7 +186,7 @@ impl Element {
                 }
             }
             span.spanned_into(iter.span());
-            return Ok(Self { kind, span, tag_span: tag.span() });
+            return Ok(Self { kind, span, tag: tag.into() });
         }
 
         // attributes
@@ -194,7 +205,7 @@ impl Element {
 
         span.spanned_into(iter.span());
 
-        Ok(Self { span, kind, tag_span: tag.span() })
+        Ok(Self { span, kind, tag: tag.into() })
     }
 }
 
@@ -283,7 +294,7 @@ impl Text {
 }
 
 pub mod tokenizer {
-    use crate::{error::{Error, Result}, Comment, Element, Peekable1, SyntaxTree, Text, Tokenizer1, DOCTYPE};
+    use crate::{error::Result, Comment, Element, Peekable1, SyntaxTree, Text, Tokenizer1, DOCTYPE};
 
     /// tokenizer iterator are fallible
     ///
@@ -323,14 +334,14 @@ pub mod tokenizer {
 
         fn next(&mut self) -> Option<Self::Item> {
             let tree = match () {
-                _ if Comment::peek(&mut self.iter, &self.buf)
-                    => SyntaxTree::Comment(nerr!(Comment::parse(&mut self.iter, &self.buf))),
-                _ if DOCTYPE::peek(&mut self.iter, &self.buf)
-                    => SyntaxTree::DOCTYPE(nerr!(DOCTYPE::parse(&mut self.iter, &self.buf))),
-                _ if Element::peek(&mut self.iter, &self.buf)
-                    => SyntaxTree::Element(nerr!(Element::parse(&mut self.iter, &self.buf))),
+                _ if Comment::peek(&mut self.iter, self.buf)
+                    => SyntaxTree::Comment(nerr!(Comment::parse(&mut self.iter, self.buf))),
+                _ if DOCTYPE::peek(&mut self.iter, self.buf)
+                    => SyntaxTree::DOCTYPE(nerr!(DOCTYPE::parse(&mut self.iter, self.buf))),
+                _ if Element::peek(&mut self.iter, self.buf)
+                    => SyntaxTree::Element(nerr!(Element::parse(&mut self.iter, self.buf))),
                 _ => if self.iter.peek().is_some() {
-                    SyntaxTree::Text(nerr!(Text::parse(&mut self.iter, &self.buf)))
+                    SyntaxTree::Text(nerr!(Text::parse(&mut self.iter, self.buf)))
                 } else {
                     return None
                 },
@@ -392,6 +403,12 @@ mod impls {
     }
 
     impl Spanned for Text {
+        fn span(&self) -> Span {
+            self.span.clone()
+        }
+    }
+
+    impl Spanned for Ident {
         fn span(&self) -> Span {
             self.span.clone()
         }
