@@ -274,6 +274,21 @@ pub mod span {
         pub fn line_col(&self) -> (usize,usize) {
             (self.line,self.col)
         }
+
+        /// check is current span is unknown
+        ///
+        /// its check is all value set to 0, which should not be possible normally
+        pub fn is_unknown(&self) -> bool {
+            self.offset == 0 && self.line == 0 &&
+            self.line == 0 && self.col == 0
+        }
+
+        /// create unknown span which all value is 0
+        ///
+        /// use [`Self::is_unknown`] to check is current span unknown
+        pub fn unknown() -> Self {
+            Self { offset: 0, len: 0, line: 0, col: 0 }
+        }
     }
 
     /// a trait helper to work with [`Span`]
