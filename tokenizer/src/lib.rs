@@ -183,52 +183,56 @@ pub mod tokenizer {
         }
     }
 
-    const PEEK_N: usize = 3;
-
     #[derive(Debug)]
-    pub struct Peekable<'r> {
+    pub struct Peekable<'r,const N: usize = 3> {
         iter: Tokenizer<'r>,
-        peeked: [Option<TokenTree>;PEEK_N],
+        peeked: [Option<TokenTree>;N],
     }
 
-    impl<'r> Peekable<'r> {
+    impl<'r,const N: usize> Peekable<'r,N> {
         fn new(iter: Tokenizer<'r>) -> Self {
-            Self { iter, peeked: Default::default() }
+            Self { iter, peeked: [const { None };N] }
         }
 
-        fn peek_n(&mut self, n: usize) -> Option<&TokenTree> {
-            let some = &mut self.peeked[n];
-            if some.is_none() {
-                some.replace(self.iter.next()?);
+        /// peek n forward
+        ///
+        /// this is 0 indexed, so `peen_n(0)` will peek once
+        ///
+        /// panic if `n >= N`
+        pub fn peek_n(&mut self, n: usize) -> Option<&TokenTree> {
+            for i in 0..=n {
+                if self.peeked[i].is_none() {
+                    self.peeked[i].replace(self.iter.next()?);
+                }
             }
             self.peeked[n].as_ref()
         }
 
+        /// use [`Self::peek_n`] instead
         pub fn peek(&mut self) -> Option<&TokenTree> {
             self.peek_n(0)
         }
 
+        /// use [`Self::peek_n`] instead
         pub fn peek2(&mut self) -> Option<&TokenTree> {
-            self.peek_n(0);
             self.peek_n(1)
         }
 
+        /// use [`Self::peek_n`] instead
         pub fn peek3(&mut self) -> Option<&TokenTree> {
-            self.peek_n(0);
-            self.peek_n(1);
             self.peek_n(2)
         }
     }
 
-    impl<'r> Iterator for Peekable<'r> {
+    impl<'r,const N: usize> Iterator for Peekable<'r,N> {
         type Item = TokenTree;
 
         fn next(&mut self) -> Option<Self::Item> {
             let one = self.peeked[0].take();
 
-            for offset in 0..PEEK_N-1 {
+            for offset in 0..N-1 {
                 let [one,two] = &mut self.peeked[offset..offset + 2] else {
-                    unreachable!("{PEEK_N} len array")
+                    unreachable!("{N} len array")
                 };
                 std::mem::swap(one, two);
             }
