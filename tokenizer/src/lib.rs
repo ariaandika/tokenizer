@@ -121,7 +121,7 @@ pub mod tokenizer {
             Self { iter: BufIter::new(buf) }
         }
 
-        pub fn peekable_tokens(self) -> Peekable<'r> {
+        pub fn peekable_tokens<const N: usize>(self) -> Peekable<'r,N> {
             Peekable::new(self)
         }
     }
