@@ -14,7 +14,7 @@ This is not a general tokenizer, because other kind of tokens can have other rul
 and its not worth to creating another abstraction layer. Instead, specialized tokenizer usually created
 on its own, which also can derived from this tokenizer. That also make this tokenizer infallible.
 
-Other kinds of tokenizer mentioned in [extra](##Extra)
+Other kinds of tokenizer mentioned in [extra](#extra)
 
 ### `TokenTree`
 
@@ -36,11 +36,13 @@ cargo doc --open
 
 Derived from `tokenizer`, we can create a html lexer.
 
-Here, we evaluate open or closed node, not the whole element with its children. This is to avoid allocating
+Here, we parse open or close element, not the whole element with its children. This is to avoid allocating
 new vector when iterating. So the result is a one dimensional tokens. Attributes also not parsed, only validated,
 with same the reason above, to avoid allocating new vector. We can iterate attribute on its own if needed.
 
-We can detect:
+### `Syntax Tree`
+
+possible types of token:
 
 - `DOCTYPE`, html doctype `<!DOCTYPE html>`
 - `Comment`, html comment, `<!-- any value -->`
