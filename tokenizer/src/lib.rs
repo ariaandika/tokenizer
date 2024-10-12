@@ -206,11 +206,12 @@ pub mod tokenizer {
     pub struct Peekable<'r,const N: usize = 3> {
         iter: Tokenizer<'r>,
         peeked: [Option<TokenTree>;N],
+        last_span: Span,
     }
 
     impl<'r,const N: usize> Peekable<'r,N> {
         fn new(iter: Tokenizer<'r>) -> Self {
-            Self { iter, peeked: [const { None };N] }
+            Self { last_span: iter.span(), iter, peeked: [const { None };N] }
         }
 
         /// peek n forward
@@ -256,19 +257,37 @@ pub mod tokenizer {
                 std::mem::swap(one, two);
             }
 
-            match one {
-                Some(some) => Some(some),
-                None => self.iter.next(),
-            }
+            let next = match one {
+                Some(some) => some,
+                None => self.iter.next()?,
+            };
+
+            self.last_span = next.span();
+
+            Some(next)
         }
     }
 
     impl<const N: usize> Spanned for Peekable<'_,N> {
         fn span(&self) -> Span {
-            match self.peeked.first() {
-                Some(Some(tree)) => tree.span(),
-                _ => self.iter.span(),
-            }
+            self.last_span.clone()
+        }
+    }
+
+    #[cfg(test)]
+    mod test {
+        use super::*;
+
+        #[test]
+        fn test_peekable_span() {
+            let src = b"<!DOCTYPE html> <html>";
+            let mut tk = Tokenizer::new(src).peekable_tokens::<4>();
+
+            let _ = tk.next().unwrap();
+            let span = tk.span();
+            let _ = tk.peek().unwrap();
+
+            assert_eq!(tk.span().offset(), span.offset());
         }
     }
 
@@ -289,7 +308,7 @@ pub mod span {
 
     impl Span {
         /// create new span
-        pub fn new(offset: usize, len: usize, line: usize, col: usize) -> Self {
+        pub const fn new(offset: usize, len: usize, line: usize, col: usize) -> Self {
             Self { offset, len, line, col }
         }
 
@@ -299,14 +318,24 @@ pub mod span {
         }
 
         /// returns (line, column) of the source
-        pub fn line_col(&self) -> (usize,usize) {
+        pub const fn line_col(&self) -> (usize,usize) {
             (self.line,self.col)
+        }
+
+        /// get span len
+        pub const fn len(&self) -> usize {
+            self.len
+        }
+
+        /// get span offset
+        pub const fn offset(&self) -> usize {
+            self.offset
         }
 
         /// check is current span is unknown
         ///
         /// its check is all value set to 0, which should not be possible normally
-        pub fn is_unknown(&self) -> bool {
+        pub const fn is_unknown(&self) -> bool {
             self.offset == 0 && self.len == 0 &&
             self.line == 0 && self.col == 0
         }
@@ -314,7 +343,7 @@ pub mod span {
         /// create unknown span which all value is 0
         ///
         /// use [`Self::is_unknown`] to check is current span unknown
-        pub fn unknown() -> Self {
+        pub const fn unknown() -> Self {
             Self { offset: 0, len: 0, line: 0, col: 0 }
         }
     }
