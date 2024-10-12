@@ -104,6 +104,8 @@ impl Whitespace {
 pub mod tokenizer {
     //! the actual tokenizer
     use std::{iter, slice};
+    use crate::span::Spanned;
+
     use super::{TokenTree, Ident, Punct, Whitespace};
     use super::span::Span;
 
@@ -142,10 +144,17 @@ pub mod tokenizer {
         }
     }
 
+    impl Spanned for Tokenizer<'_> {
+        fn span(&self) -> Span {
+            self.iter.span()
+        }
+    }
+
     /// iterator that track [`Span`] and yield a byte from source buffer
     #[derive(Debug)]
     pub struct BufIter<'b> {
         iter: SlicePeek<'b>,
+        last_span: Span,
         offset: usize,
         line: usize,
         col: usize,
@@ -154,7 +163,11 @@ pub mod tokenizer {
     impl<'b> BufIter<'b> {
         /// create new [`BufIter`] from source buffer
         pub fn new(buf: &'b [u8]) -> Self {
-            Self { iter: buf.iter().peekable(), offset: 0, line: 1, col: 1 }
+            Self {
+                iter: buf.iter().peekable(),
+                last_span: Span::new(0, 1, 1, 1),
+                offset: 0, line: 1, col: 1,
+            }
         }
 
         /// peek the next byte, see [`std::iter::Peekable::peek`]
@@ -168,7 +181,7 @@ pub mod tokenizer {
 
         fn next(&mut self) -> Option<Self::Item> {
             let byte = self.iter.next()?;
-            let span = Span::new(self.offset, 1, self.line, self.col);
+            self.last_span = Span::new(self.offset, 1, self.line, self.col);
 
             self.offset += 1;
 
@@ -179,7 +192,13 @@ pub mod tokenizer {
                 self.col += 1;
             }
 
-            Some((span, byte))
+            Some((self.last_span.clone(), byte))
+        }
+    }
+
+    impl Spanned for BufIter<'_> {
+        fn span(&self) -> Span {
+            self.last_span.clone()
         }
     }
 
@@ -241,6 +260,12 @@ pub mod tokenizer {
                 Some(some) => Some(some),
                 None => self.iter.next(),
             }
+        }
+    }
+
+    impl Spanned for Peekable<'_> {
+        fn span(&self) -> Span {
+            self.iter.span()
         }
     }
 
