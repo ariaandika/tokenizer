@@ -376,18 +376,65 @@ pub mod token {
     }
 
     /// literal quoted string
+    ///
+    /// this token use nested parsing method, where it needs another token to parse the nested content
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// fn main(input: &mut Parser<'_>) -> Result<()> {
+    ///     // this will check for leading '"'
+    ///     let quoted = Quoted::new(input)?;
+    ///
+    ///     // this will check for trailing '"'
+    ///     while quoted.next(input) {
+    ///         // if none, nested token should advanced parser
+    ///         // or else this will loop indefinitely
+    ///         input.next()?;
+    ///     }
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
     pub struct Quoted {
         pub span: Span
     }
 
     impl Quoted {
+        /// create new [`Quoted`]
         pub fn new(input: &mut Parser<'_>) -> Result<Self> {
             let _quote = input.next_as::<b'"'>()?;
             Ok(Self { span: input.span() })
         }
 
+        /// continue nested parsing
         pub fn next(&self, input: &mut Parser<'_>) -> Result<bool> {
             if input.peek_byte()? == &b'"' {
+                input.next().expect("peeked");
+                return Ok(false);
+            }
+            Ok(true)
+        }
+    }
+
+    /// parse token surrounded by `{ .. }`
+    pub struct Braced {
+        pub span: Span
+    }
+
+    pub const OBR: u8 = b'{';
+    pub const CBR: u8 = b'}';
+
+    impl Braced {
+
+        /// create new [`Braced`]
+        pub fn new(input: &mut Parser<'_>) -> Result<Self> {
+            let _quote = input.next_as::<OBR>()?;
+            Ok(Self { span: input.span() })
+        }
+
+        /// continue nested parsing
+        pub fn next(&self, input: &mut Parser<'_>) -> Result<bool> {
+            if input.peek_byte()? == &CBR {
                 input.next().expect("peeked");
                 return Ok(false);
             }
@@ -399,25 +446,38 @@ pub mod token {
 
 #[cfg(debug_assertions)]
 pub mod test {
-    use crate::{token::{Ident, LitStr}, Parser};
+    use crate::{token::{Braced, Ident, LitStr}, Parser};
 
     pub fn test() {
-        let buf = br#" aoawd awd  " deez app " iaiwdj  aiwjd  aijd "#;
+        let buf = br#" aoawd awd  " deez app " iaiwdj object {nice one }  aiwjd  aijd "#;
         let mut input = Parser::new(buf);
 
-        loop {
-            if input.is_empty() { break; }
+        while parse(buf, &mut input) { }
+
+        fn parse(buf: &[u8; 64], input: &mut Parser) -> bool {
+            if input.is_empty() { return false; }
             if input.peek_byte().unwrap() == &b'"' {
                 let lit = input.parse::<LitStr>().unwrap();
                 let lit_val = lit.span.evaluate(buf);
                 let s = std::str::from_utf8(lit_val).unwrap();
                 dbg!(s);
+
+            } else if input.peek_byte().unwrap() == &b'{' {
+                let brace = Braced::new(input).unwrap();
+                while brace.next(input).unwrap() {
+                    parse(buf, input);
+                };
+                let val = brace.span.into_spanned(&input.span()).evaluate(buf);
+                let s = std::str::from_utf8(val).unwrap();
+                dbg!(s);
+
             } else {
                 let ident = input.parse::<Ident>().unwrap();
                 let ident_val = ident.span.evaluate(buf);
                 let s = std::str::from_utf8(ident_val).unwrap();
                 dbg!(s);
             }
+            true
         }
     }
 }
