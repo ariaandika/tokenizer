@@ -2,6 +2,12 @@
 
 inspired by rust `syn` and `proc_macro`
 
+## Workspace
+
+- `tokenizer`, convert bytes to tokens
+- `parser`, more extensible parser
+- `html-parser`, the first attempt of parser
+
 ## Tokenizer
 
 Tokenize a stream of bytes, into collection of token trees
@@ -14,8 +20,6 @@ This is not a general tokenizer, because other kind of tokens can have other rul
 and its not worth to creating another abstraction layer. Instead, specialized tokenizer usually created
 on its own, which also can derived from this tokenizer. That also make this tokenizer infallible.
 
-Other kinds of tokenizer mentioned in [extra](#extra)
-
 ### `TokenTree`
 
 possible types of token:
@@ -27,14 +31,17 @@ possible types of token:
 for more detail, see the generated documentation
 
 ```bash
-cargo doc --open
+cargo doc -p tokenizer --open
 ```
 
-## Extra
+## Parser
 
-### HTML Parser
+More extensible parser, moving out of rust's `Iterator` trait, and make api more like `syn`.
 
-Derived from `tokenizer`, we can create a html parser.
+## HTML Parser
+
+The first attempt of parser. Derived from `tokenizer`. HTML tokens itself is pretty simple, so this package is not
+really design of extensibility, most of its is hard coded.
 
 Here, we parse open or close element, not the whole element with its children. This is to avoid allocating
 new vector when iterating. So the result is a one dimensional tokens. Attributes also not parsed, only validated,
