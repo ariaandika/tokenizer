@@ -39,7 +39,7 @@ impl<'r> Parser<'r> {
         Self { buf, offset: span.offset, line: span.line, col: span.col }
     }
 
-    /// advance cursor forward by byte
+    /// advance cursor forward by a byte
     pub fn next(&mut self) -> Result<u8> {
         if self.len() == self.offset {
             return Err(self.eof());
@@ -61,17 +61,17 @@ impl<'r> Parser<'r> {
 
     /// advanced cursor forward and check if its eq to given byte
     ///
-    /// this is convinient function that can check and return detailed error
+    /// this is convinient function that can check and return more detailed error
     pub fn next_as<const B: u8>(&mut self) -> Result<u8> {
         match self.next() {
             Ok(ok) if ok == B => Ok(B),
             Ok(ok) => Err(self.error(ErrorKind::ExpectFound(B, ok))),
-            Err(err) if err.is_eof() => Err(Error::new(err.span, ErrorKind::ExpectEof(B))),
+            Err(err) if err.is_eof() => Err(self.error(ErrorKind::ExpectEof(B))),
             Err(err) => Err(err),
         }
     }
 
-    /// keep [`Parser::next`] if whitespace found
+    /// keep calling [`Parser::next`] if whitespace found
     pub fn skip_whitespaces(&mut self) {
         while let Ok(w) = self.peek_byte() {
             if w.is_ascii_whitespace() {
@@ -82,9 +82,11 @@ impl<'r> Parser<'r> {
         }
     }
 
-    /// call parse for given type
+    /// call [`Parse`] for given type
     ///
-    /// this will clear leading and trailing whitespaces, see [`Self::skip_whitespaces`]
+    /// trim leading and trailing whitespaces, see [`Self::skip_whitespaces`]
+    ///
+    /// to parse without trimming whitespaces, use [`Parse::parse`] directly
     pub fn parse<T>(&mut self) -> Result<T> where T: Parse {
         self.skip_whitespaces();
         let res = T::parse(self)?;
@@ -129,7 +131,8 @@ impl<'r> Parser<'r> {
 
     /// create [`Span`] of current state
     pub const fn span(&self) -> Span {
-        if cfg!(debug_assertions) && self.offset == 0 {
+        #[cfg(debug_assertions)]
+        if self.offset == 0 {
             panic!("at least next should be called once before creating span")
         }
         Span::new(self.offset - 1, 1, self.line, self.col)
@@ -425,7 +428,6 @@ pub mod token {
     pub const CBR: u8 = b'}';
 
     impl Braced {
-
         /// create new [`Braced`]
         pub fn new(input: &mut Parser<'_>) -> Result<Self> {
             let _quote = input.next_as::<OBR>()?;
