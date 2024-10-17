@@ -164,7 +164,7 @@ pub mod span {
     ///
     /// the struct only contain 4 usize, which is cheap to clone
     ///
-    /// use [`Spanned::evaluate`] to get actual value from given buffer
+    /// use [`Span::evaluate`] to get actual value from given buffer
     #[derive(Debug, Clone)]
     pub struct Span {
         pub offset: usize,
