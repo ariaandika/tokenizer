@@ -43,6 +43,8 @@ More extensible parser, moving out of rust's `Iterator` trait, and make api more
 
 byte oriented parser, good for piping buffer without abstracting into tokens.
 
+see example in `buf-iter/examples`, the test in `buf-iter/tests` is also an example.
+
 ## HTML Parser
 
 The first attempt of parser. Derived from `tokenizer`. HTML tokens itself is pretty simple, so this package is not
