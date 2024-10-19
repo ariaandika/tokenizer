@@ -141,6 +141,54 @@ impl<'r> BufIter<'r> {
         }
         Ok(span.into_spanned(&self.span()))
     }
+
+    /// collecting until specified byte found
+    ///
+    /// at least one byte must be found, otherwise return [`ErrorKind::Unexpected`]
+    ///
+    /// the predicate byte is not included in returned span
+    ///
+    /// EOF aware, means will stop instead of return error
+    pub fn collect_as<const B: u8>(&mut self) -> Result<Span> {
+        match self.next() {
+            Ok(ok) if ok != B => {}
+            Ok(ok) => return Err(self.error(ErrorKind::ExpectFound(B, ok))),
+            Err(err) if err.is_eof() => return Err(self.error(ErrorKind::ExpectEof(B))),
+            Err(err) => return Err(err),
+        }
+        let span = self.span();
+        loop {
+            match self.peek() {
+                Some(some) if some != &B => self.next_peeked(),
+                Some(_) => break,
+                None => break,
+            }
+        }
+        Ok(span.into_spanned(&self.span()))
+    }
+
+    /// collecting with predicate
+    ///
+    /// keep collecting while predicate return true
+    ///
+    /// at least one predicate must success, otherwise return [`ErrorKind::Unexpected`]
+    ///
+    /// EOF aware, means will stop instead of return error
+    pub fn collect_with<F>(&mut self, predicate: F) -> Result<Span> where F: Fn(&u8) -> bool {
+        match self.next()? {
+            b if predicate(&b) => {}
+            b => return Err(self.error(ErrorKind::Unexpected(b))),
+        }
+        let span = self.span();
+        loop {
+            match self.peek() {
+                Some(some) if predicate(some) => self.next_peeked(),
+                Some(_) => break,
+                None => break,
+            }
+        }
+        Ok(span.into_spanned(&self.span()))
+    }
 }
 
 /// Peek forward without advancing iterator
@@ -301,6 +349,8 @@ pub struct Error {
 pub enum ErrorKind {
     /// unexpected eof
     Eof,
+    /// unexpected `_`
+    Unexpected(u8),
     /// expect `_`, found EOF
     ExpectEof(u8),
     /// expect `_`, found `_`
@@ -341,6 +391,11 @@ impl std::fmt::Display for ErrorKind {
         use std::fmt::Write;
         match self {
             Self::Eof => f.write_str("unexpected EOF"),
+            Self::Unexpected(fd) => {
+                f.write_str("unexpected `")?;
+                f.write_char(*fd as char)?;
+                f.write_char('`')
+            }
             ErrorKind::ExpectEof(ex) => {
                 f.write_str("expect `")?;
                 f.write_char(*ex as char)?;
