@@ -26,8 +26,7 @@ impl<'r> BufIter<'r> {
 
     /// clone [`BufIter`] starting from current span
     pub const fn fork(&self) -> Self {
-        Self::from_span(self.buf, Span::new(self.offset, 1, self.line, self.col)
-)
+        Self::from_span(self.buf, Span::new(self.offset, 1, self.line, self.col))
     }
 }
 
@@ -202,6 +201,8 @@ impl<'r> BufIter<'r> {
     }
 
     /// peek n byte forward without advancing parser
+    ///
+    /// n is 0 indexed, so `buf_iter.peek_n(0)` will peek 1 forward
     ///
     /// return [`None`] if eof, to return error instead use [`Self::peek_required`]
     pub fn peek_n(&self, n: usize) -> Option<&u8> {
