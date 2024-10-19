@@ -36,6 +36,7 @@ impl<'r> BufIter<'r> {
     /// advance cursor forward by a byte
     ///
     /// possible error is only [`ErrorKind::Eof`]
+    #[allow(clippy::should_implement_trait)]
     pub fn next(&mut self) -> Result<u8> {
         if self.len() == self.offset {
             return Err(self.eof());
