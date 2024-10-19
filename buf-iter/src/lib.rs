@@ -124,7 +124,7 @@ impl<'r> BufIter<'r> {
     /// - cannot starts with numeric
     /// - specified in [`BufIter::next_ident`]
     ///
-    /// EOF aware, means will stop instead of return error when EOF after one ident
+    /// EOF aware, means will stop instead of return error when EOF after one character
     pub fn collect_ident(&mut self) -> Result<Span> {
         match self.next()? {
             b'_' => {}
@@ -136,7 +136,7 @@ impl<'r> BufIter<'r> {
             match self.peek() {
                 Some(ok) if ok.is_ascii_alphanumeric() => self.next_peeked(),
                 Some(_) => break,
-                None => return Err(self.eof()),
+                None => break,
             }
         }
         Ok(span.into_spanned(&self.span()))
