@@ -3,6 +3,51 @@
 //! iterate over buffer using [`BufIter`], peek forward and track position with [`Span`]
 
 /// buffer iterator
+///
+/// # Examples
+///
+/// ```rust
+/// use buf_iter::{BufIter, ErrorKind};
+///
+/// const SRC: &[u8] = b"\
+/// GET /health?id=4 HTTP/1.1
+/// Client-Agent: idk
+/// Content-Length: 142";
+///
+/// let mut iter = BufIter::new(SRC);
+///
+/// // `next` return the next byte
+/// let next = iter.next();
+/// assert_eq!(next, Ok(b'G'));
+///
+/// // create a checkpoint
+/// let span = iter.span();
+///
+/// // `next_as` will construct contextual error
+/// let next_as = iter.next_as::<b'E'>();
+/// assert_eq!(next_as, Ok(b'E'));
+///
+/// // `peek` forward without advancing buffer
+/// let peek = iter.peek();
+/// assert_eq!(peek, Some(&b'T'));
+/// iter.next_peeked();
+///
+/// // get the actual value
+/// let span = span.into_spanned(&iter.span());
+/// assert_eq!(span.evaluate(SRC),b"GET");
+///
+/// // utilities
+/// iter.skip_whitespaces();
+/// assert_ne!(iter.peek(),Some(&b' '));
+///
+/// // `collect_as` will continue until given byte found
+/// let path = iter.collect_as::<b'?'>().unwrap();
+/// assert_eq!(path.evaluate(SRC), b"/health");
+///
+/// // `collect_with` will continue until predicate return false
+/// let query = iter.collect_with(|e|e!=&b' ').unwrap();
+/// assert_eq!(query.evaluate(SRC), b"?id=4");
+/// ```
 pub struct BufIter<'r> {
     buf: &'r [u8],
     offset: usize,
@@ -295,7 +340,7 @@ impl<'r> From<(&'r [u8],Span)> for BufIter<'r> {
 /// the struct only contain 4 usize, which is cheap to clone
 ///
 /// use [`Span::evaluate`] to get actual value from given buffer
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Span {
     pub offset: usize,
     pub len: usize,
@@ -340,14 +385,14 @@ impl Span {
 pub type Result<T,E = Error> = std::result::Result<T,E>;
 
 /// parsing error
-#[derive(Debug)]
+#[derive(Debug, PartialEq,Eq)]
 pub struct Error {
     pub kind: ErrorKind,
     pub span: Span,
 }
 
 /// parsing error kind
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum ErrorKind {
     /// unexpected eof
     Eof,
