@@ -1,4 +1,4 @@
 [workspace]
-members = [ "html-parser", "parser","tokenizer"]
+members = [ "buf-iter", "html-parser", "parser","tokenizer"]
 resolver = "2"
 

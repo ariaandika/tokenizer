@@ -6,6 +6,7 @@ inspired by rust `syn` and `proc_macro`
 
 - `tokenizer`, convert bytes to tokens
 - `parser`, more extensible parser
+- `buf-iter`, more byte oriented parser instead of token
 - `html-parser`, the first attempt of parser
 
 ## Tokenizer
@@ -37,6 +38,12 @@ cargo doc -p tokenizer --open
 ## Parser
 
 More extensible parser, moving out of rust's `Iterator` trait, and make api more like `syn`.
+
+## BufIter
+
+byte oriented parser, good for piping buffer without abstracting into tokens.
+
+see example in `buf-iter/examples`, the test in `buf-iter/tests` is also an example.
 
 ## HTML Parser
 
